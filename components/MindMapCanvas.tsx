@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import {
   ReactFlow,
   Background,
@@ -15,10 +15,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useMindMapStore } from '@/lib/store';
-import { getRandomColor } from '@/lib/utils';
 import CustomNode from './CustomNode';
 import Toolbar from './Toolbar';
-import NodeEditor from './NodeEditor';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -39,11 +37,7 @@ export default function MindMapCanvas() {
     onNodesChange,
     onEdgesChange,
     addEdge: addStoreEdge,
-    setNodes,
-    setEdges,
   } = useMindMapStore();
-
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -62,28 +56,7 @@ export default function MindMapCanvas() {
     [addStoreEdge]
   );
 
-  const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelectedNodeId(node.id);
-  }, []);
-
-  // Initialiser avec un node central si vide
-  useEffect(() => {
-    if (nodes.length === 0) {
-      const colors = getRandomColor();
-      const centralNode: Node = {
-        id: '1',
-        type: 'custom',
-        position: { x: 400, y: 200 },
-        data: {
-          label: 'Idée Centrale',
-          colorClass: colors.bg,
-          borderClass: colors.border,
-          textClass: colors.text,
-        },
-      };
-      setNodes([centralNode]);
-    }
-  }, [nodes.length, setNodes]);
+  // Ne pas initialiser avec un node central - attendre la génération IA
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
@@ -93,7 +66,6 @@ export default function MindMapCanvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeDoubleClick={onNodeDoubleClick}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={edgeOptions}
         fitView
@@ -115,17 +87,9 @@ export default function MindMapCanvas() {
         <MiniMap
           className="bg-white rounded-lg shadow-lg border border-gray-200"
           nodeColor={(node) => {
-            // Extraire la couleur principale du gradient
-            const colorClass = node.data?.colorClass || '';
-            if (colorClass.includes('blue')) return '#3b82f6';
-            if (colorClass.includes('purple')) return '#a855f7';
-            if (colorClass.includes('pink')) return '#ec4899';
-            if (colorClass.includes('orange')) return '#f97316';
-            if (colorClass.includes('green')) return '#22c55e';
-            if (colorClass.includes('teal')) return '#14b8a6';
-            if (colorClass.includes('cyan')) return '#06b6d4';
-            if (colorClass.includes('indigo')) return '#6366f1';
-            return '#3b82f6';
+            // Extraire la couleur du borderColor
+            const borderColor = node.data?.borderColor;
+            return borderColor || '#3b82f6';
           }}
           maskColor="rgb(240, 240, 255, 0.6)"
         />
@@ -133,13 +97,6 @@ export default function MindMapCanvas() {
           <Toolbar />
         </Panel>
       </ReactFlow>
-
-      {selectedNodeId && (
-        <NodeEditor
-          nodeId={selectedNodeId}
-          onClose={() => setSelectedNodeId(null)}
-        />
-      )}
     </div>
   );
 }

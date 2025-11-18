@@ -1,16 +1,16 @@
-# Mind Map IA - Application Interactive de Mind Mapping
+# Mind Map IA - Génération Automatique de Mind Maps par IA
 
-Une application moderne de mind mapping construite avec Next.js, React, ReactFlow et Prisma, offrant une interface intuitive et visuellement attrayante pour créer et organiser vos idées.
+Une application moderne de mind mapping avec génération automatique par Intelligence Artificielle. Entrez simplement un thème et laissez l'IA créer une mind map structurée et colorée pour vous !
 
 ## ✨ Fonctionnalités
 
-- **Interface Interactive** : Créez et manipulez des nœuds par glisser-déposer
-- **Design Magnifique** : Palette de 8 couleurs gradient vibrantes pour vos nœuds
-- **Édition Intuitive** : Double-cliquez sur un nœud pour l'éditer (texte et couleur)
-- **Connexions Animées** : Créez des liens entre vos idées avec des animations fluides
-- **Persistance des Données** : Sauvegardez vos mind maps dans une base de données SQLite
-- **Contrôles Avancés** : Zoom, minimap, et contrôles de navigation
-- **Design Responsive** : Interface adaptée avec des effets de hover et transitions
+- **🤖 Génération par IA** : Entrez un thème et l'IA génère automatiquement une mind map complète
+- **🎨 Couleurs Intelligentes** : Chaque branche principale a sa propre couleur, avec des sous-branches assorties
+- **✨ Animation Fluide** : Les nœuds apparaissent progressivement avec une animation
+- **🎯 Interface Interactive** : Manipulez les nœuds par glisser-déposer après la génération
+- **💾 Persistance des Données** : Sauvegardez vos mind maps dans une base de données SQLite
+- **🔍 Contrôles Avancés** : Zoom, minimap, et contrôles de navigation
+- **🌈 Design Moderne** : Interface avec gradients et effets visuels
 
 ## 🚀 Démarrage Rapide
 
@@ -18,6 +18,7 @@ Une application moderne de mind mapping construite avec Next.js, React, ReactFlo
 
 - Node.js 18+ installé
 - npm ou yarn
+- Une clé API OpenAI
 
 ### Installation
 
@@ -26,54 +27,57 @@ Une application moderne de mind mapping construite avec Next.js, React, ReactFlo
 npm install
 ```
 
-2. Initialiser la base de données :
+2. Configurer les variables d'environnement :
+```bash
+cp .env.example .env
+```
+Puis éditez le fichier `.env` et ajoutez votre clé API OpenAI :
+```
+OPENAI_API_KEY=votre_clé_api_ici
+DATABASE_URL="file:./dev.db"
+```
+
+3. Initialiser la base de données :
 ```bash
 npx prisma migrate dev --name init
 ```
 
-3. Lancer le serveur de développement :
+4. Lancer le serveur de développement :
 ```bash
 npm run dev
 ```
 
-4. Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur
+5. Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur
 
 ## 🎨 Utilisation
 
-### Créer un Nouveau Nœud
+### Générer une Mind Map avec l'IA
 
-1. Tapez votre idée dans le champ "Nouvelle idée..."
-2. Cliquez sur "+ Ajouter" ou appuyez sur Entrée
-3. Le nœud apparaît avec une couleur aléatoire
+1. Entrez un thème dans la barre de recherche (ex: "Intelligence Artificielle", "Photosynthèse", "Marketing Digital")
+2. Cliquez sur "✨ Générer" ou appuyez sur Entrée
+3. L'IA génère automatiquement une mind map structurée
+4. Les nœuds apparaissent progressivement avec une animation
+5. Chaque branche principale a sa propre couleur avec un gradient unique
+6. Les sous-branches héritent de la couleur de leur parent
+7. Les connexions sont colorées selon la branche source
 
-### Éditer un Nœud
+### Manipuler la Mind Map
 
-1. **Double-cliquez** sur n'importe quel nœud
-2. Modifiez le texte
-3. Changez la couleur en cliquant sur une palette
-4. Cliquez "Sauvegarder" ou "Supprimer"
-
-### Connecter des Nœuds
-
-1. Cliquez et maintenez sur le point de connexion (rond blanc) en bas d'un nœud
-2. Glissez vers le point de connexion en haut d'un autre nœud
-3. Relâchez pour créer la connexion animée
-
-### Naviguer
-
-- **Déplacer** : Cliquez et glissez sur le canvas
-- **Zoom** : Utilisez les contrôles en bas à gauche ou la molette de la souris
-- **Minimap** : Visualisez et naviguez dans votre mind map complète
+1. **Déplacer un nœud** : Cliquez et glissez n'importe quel nœud
+2. **Connecter des nœuds** : Cliquez sur le point de connexion en bas d'un nœud et glissez vers le point en haut d'un autre
+3. **Zoomer** : Utilisez les contrôles en bas à gauche ou la molette de la souris
+4. **Naviguer** : Cliquez et glissez sur le fond pour déplacer la vue
 
 ### Sauvegarder
 
 - Cliquez sur le bouton "💾 Sauvegarder" dans la toolbar
-- Votre mind map est sauvegardée dans la base de données
+- Votre mind map est sauvegardée dans la base de données SQLite
 
 ## 🛠️ Stack Technique
 
 - **Framework** : Next.js 15 avec App Router
 - **UI** : React 19
+- **IA** : OpenAI GPT-4o-mini pour la génération de contenu
 - **Styling** : Tailwind CSS avec gradients personnalisés
 - **Mind Map** : ReactFlow (@xyflow/react)
 - **Base de données** : SQLite avec Prisma ORM
@@ -86,21 +90,24 @@ npm run dev
 mind-map-ia/
 ├── app/
 │   ├── api/
+│   │   ├── generate/         # API route pour génération IA
 │   │   └── mindmap/          # API routes pour CRUD
 │   ├── globals.css           # Styles globaux
 │   ├── layout.tsx            # Layout principal
 │   └── page.tsx              # Page d'accueil
 ├── components/
-│   ├── CustomNode.tsx        # Composant de nœud personnalisé
+│   ├── CustomNode.tsx        # Composant de nœud personnalisé avec styles inline
 │   ├── MindMapCanvas.tsx     # Canvas ReactFlow principal
-│   ├── NodeEditor.tsx        # Modal d'édition de nœud
-│   └── Toolbar.tsx           # Barre d'outils
+│   ├── NodeEditor.tsx        # Modal d'édition de nœud (non utilisé)
+│   └── Toolbar.tsx           # Barre d'outils avec recherche IA
 ├── lib/
 │   ├── prisma.ts             # Client Prisma
 │   ├── store.ts              # Store Zustand
 │   └── utils.ts              # Utilitaires et couleurs
 ├── prisma/
 │   └── schema.prisma         # Schéma de base de données
+├── .env                      # Variables d'environnement (API keys)
+├── .env.example              # Template pour .env
 └── package.json
 ```
 
@@ -127,6 +134,11 @@ npm run lint      # Vérifier le code avec ESLint
 
 ## 📝 API Routes
 
+### POST `/api/generate`
+**Génère une mind map via IA**
+- Body: `{ "theme": "votre thème" }`
+- Retourne: `{ "nodes": [...], "edges": [...], "theme": "..." }`
+
 ### GET `/api/mindmap`
 Récupère toutes les mind maps
 
@@ -144,23 +156,27 @@ Supprime une mind map
 
 ## 🌟 Fonctionnalités Avancées
 
-- **Animations fluides** : Transitions CSS et animations pour une UX agréable
-- **Hover effects** : Effets au survol pour améliorer l'interactivité
-- **Sélection visuelle** : Ring jaune quand un nœud est sélectionné
-- **Drag & Drop** : Déplacez librement les nœuds
-- **Background personnalisé** : Motif de points pour guider l'organisation
-- **Sauvegarde automatique** : Détecte si c'est une nouvelle map ou une mise à jour
+- **🤖 Génération IA intelligente** : Utilise GPT-4o-mini pour créer des structures cohérentes
+- **🎨 Couleurs par branche** : Système de couleurs hiérarchique automatique
+- **✨ Animations progressives** : Chaque nœud apparaît avec un délai de 150ms
+- **🎯 Positionnement radial** : Les nœuds sont disposés en cercle autour du centre
+- **🔗 Connexions colorées** : Les edges héritent de la couleur du nœud source
+- **💫 Hover effects** : Effets au survol pour améliorer l'interactivité
+- **🎯 Sélection visuelle** : Ring jaune quand un nœud est sélectionné
+- **🖱️ Drag & Drop** : Déplacez librement les nœuds après génération
+- **📐 Background personnalisé** : Motif de points pour guider l'organisation
 
 ## 🚧 Améliorations Futures
 
+- Régénération partielle de branches
+- Export en PNG/SVG de la mind map
+- Historique des générations
 - Mode sombre
-- Export en PNG/SVG
-- Templates de mind maps
+- Templates de mind maps prédéfinis
 - Collaboration en temps réel
 - Raccourcis clavier
 - Undo/Redo
-- Recherche de nœuds
-- Sous-nœuds et hiérarchies
+- Personnalisation du style IA
 
 ## 📄 Licence
 

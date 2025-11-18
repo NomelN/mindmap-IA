@@ -6,22 +6,22 @@ import { cn } from '@/lib/utils';
 
 interface CustomNodeData {
   label: string;
-  colorClass?: string;
-  borderClass?: string;
-  textClass?: string;
+  gradient?: string;
+  borderColor?: string;
 }
 
 function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
-  const colorClass = data.colorClass || 'bg-gradient-to-br from-blue-400 to-blue-600';
-  const borderClass = data.borderClass || 'border-blue-500';
-  const textClass = data.textClass || 'text-white';
+  const gradient = data.gradient || 'linear-gradient(to bottom right, #60a5fa, #2563eb)';
+  const borderColor = data.borderColor || '#3b82f6';
 
   return (
     <div
+      style={{
+        background: gradient,
+        borderColor: borderColor,
+      }}
       className={cn(
-        'px-6 py-4 rounded-2xl shadow-xl border-2 min-w-[180px] transition-all duration-300',
-        colorClass,
-        borderClass,
+        'px-6 py-4 rounded-2xl shadow-xl border-2 min-w-[180px] transition-all duration-300 text-white',
         selected ? 'ring-4 ring-yellow-400 ring-opacity-60 scale-105' : 'hover:scale-105',
         'backdrop-blur-sm'
       )}
@@ -32,7 +32,7 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
         className="w-3 h-3 bg-white border-2 border-gray-400"
       />
 
-      <div className={cn('font-semibold text-center text-base', textClass)}>
+      <div className="font-semibold text-center text-base">
         {data.label}
       </div>
 

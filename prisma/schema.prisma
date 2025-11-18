@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model MindMap {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  nodes       Node[]
+  edges       Edge[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Node {
+  id        String   @id @default(cuid())
+  type      String
+  label     String
+  position  String   // JSON stringified position {x, y}
+  data      String   // JSON stringified data
+  style     String?  // JSON stringified style
+  mindMapId String
+  mindMap   MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mindMapId])
+}
+
+model Edge {
+  id        String   @id @default(cuid())
+  source    String
+  target    String
+  type      String?
+  animated  Boolean  @default(false)
+  style     String?  // JSON stringified style
+  mindMapId String
+  mindMap   MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mindMapId])
+}

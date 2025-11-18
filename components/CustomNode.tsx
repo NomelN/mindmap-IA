@@ -27,7 +27,7 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
           border: 'border-4',
           shadow: 'shadow-2xl drop-shadow-2xl',
           fontWeight: 'font-bold',
-          animation: 'animate-pulse',
+          animation: '',
         };
       case 1: // Branches principales - moyennes
         return {

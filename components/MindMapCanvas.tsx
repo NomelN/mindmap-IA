@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -12,6 +12,7 @@ import {
   Connection,
   addEdge,
   Panel,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useMindMapStore } from '@/lib/store';
@@ -30,7 +31,7 @@ const edgeOptions = {
   },
 };
 
-export default function MindMapCanvas() {
+function FlowContent() {
   const {
     nodes,
     edges,
@@ -38,6 +39,8 @@ export default function MindMapCanvas() {
     onEdgesChange,
     addEdge: addStoreEdge,
   } = useMindMapStore();
+
+  const { fitView } = useReactFlow();
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -56,7 +59,55 @@ export default function MindMapCanvas() {
     [addStoreEdge]
   );
 
-  // Ne pas initialiser avec un node central - attendre la génération IA
+  // Centrer automatiquement quand les nodes changent
+  useEffect(() => {
+    if (nodes.length > 0) {
+      // Petit délai pour s'assurer que les nodes sont rendus
+      setTimeout(() => {
+        fitView({
+          padding: 0.2,
+          duration: 800,
+          maxZoom: 1,
+        });
+      }, 100);
+    }
+  }, [nodes.length, fitView]);
+
+  return (
+    <>
+      <Background
+        variant={BackgroundVariant.Dots}
+        gap={20}
+        size={1}
+        color="#cbd5e1"
+      />
+      <Controls
+        className="bg-white rounded-lg shadow-lg border border-gray-200"
+        showInteractive={false}
+      />
+      <MiniMap
+        className="bg-white rounded-lg shadow-lg border border-gray-200"
+        nodeColor={(node) => {
+          // Extraire la couleur du borderColor
+          const borderColor = node.data?.borderColor;
+          return borderColor || '#3b82f6';
+        }}
+        maskColor="rgb(240, 240, 255, 0.6)"
+      />
+      <Panel position="top-center">
+        <Toolbar />
+      </Panel>
+    </>
+  );
+}
+
+export default function MindMapCanvas() {
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+  } = useMindMapStore();
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
@@ -65,37 +116,15 @@ export default function MindMapCanvas() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={edgeOptions}
         fitView
         minZoom={0.2}
-        maxZoom={4}
+        maxZoom={1.5}
         attributionPosition="bottom-left"
         proOptions={{ hideAttribution: true }}
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="#cbd5e1"
-        />
-        <Controls
-          className="bg-white rounded-lg shadow-lg border border-gray-200"
-          showInteractive={false}
-        />
-        <MiniMap
-          className="bg-white rounded-lg shadow-lg border border-gray-200"
-          nodeColor={(node) => {
-            // Extraire la couleur du borderColor
-            const borderColor = node.data?.borderColor;
-            return borderColor || '#3b82f6';
-          }}
-          maskColor="rgb(240, 240, 255, 0.6)"
-        />
-        <Panel position="top-center">
-          <Toolbar />
-        </Panel>
+        <FlowContent />
       </ReactFlow>
     </div>
   );

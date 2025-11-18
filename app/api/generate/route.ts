@@ -157,14 +157,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Calculer la position
-      let x = 500; // Centre
-      let y = 300; // Centre
+      let x = 600; // Centre plus à droite
+      let y = 400; // Centre plus bas
 
       if (level > 0 && parentId) {
-        const radius = level === 1 ? 300 : 180; // Plus d'espace entre les niveaux
-        const spreadAngle = level === 1 ? 360 : 100;
-        const startAngle = level === 1 ? 0 : angle - spreadAngle / 2;
-        const angleStep = totalSiblings > 1 ? spreadAngle / (totalSiblings - 1) : 0;
+        const radius = level === 1 ? 450 : 250; // Beaucoup plus d'espace
+        const spreadAngle = level === 1 ? 360 : 120;
+        // Pour 4 branches, on commence à -45° pour avoir une disposition en croix
+        const startAngle = level === 1 ? -45 : angle - spreadAngle / 2;
+        const angleStep = totalSiblings > 1 ? spreadAngle / totalSiblings : 0;
         const currentAngle = startAngle + (angleStep * siblingIndex);
 
         const parentNode = nodes.find(n => n.id === parentId);

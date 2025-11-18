@@ -13,7 +13,7 @@ interface MindMapStore {
   deleteNode: (nodeId: string) => void;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
-  setMindMapId: (id: string) => void;
+  setMindMapId: (id: string | null) => void;
 }
 
 export const useMindMapStore = create<MindMapStore>((set, get) => ({

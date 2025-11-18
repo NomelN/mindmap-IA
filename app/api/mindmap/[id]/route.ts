@@ -41,7 +41,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, nodes, edges } = body;
+    const { title, description, theme, nodes, edges } = body;
 
     // Supprimer les anciens nodes et edges
     await prisma.node.deleteMany({
@@ -57,6 +57,7 @@ export async function PUT(
       data: {
         title: title || 'Nouvelle Mind Map',
         description: description || '',
+        theme: theme ? theme.toLowerCase().trim() : null,
         nodes: {
           create: nodes.map((node: any) => ({
             id: node.id,

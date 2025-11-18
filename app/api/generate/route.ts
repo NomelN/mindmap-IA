@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { nodeColors } from '@/lib/utils';
+import { prisma } from '@/lib/prisma';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -52,6 +53,79 @@ export async function POST(request: NextRequest) {
         { error: 'Le thème est requis' },
         { status: 400 }
       );
+    }
+
+    // Normaliser le thème pour la recherche (minuscule et trimmed)
+    const normalizedTheme = theme.toLowerCase().trim();
+
+    // Vérifier si une mind map existe déjà pour ce thème
+    const existingMindMap = await prisma.mindMap.findFirst({
+      where: {
+        theme: normalizedTheme,
+      },
+      include: {
+        nodes: true,
+        edges: true,
+      },
+    });
+
+    // Si une mind map existe, la retourner au lieu de régénérer
+    if (existingMindMap) {
+      // Trier les nodes par leur index pour maintenir l'ordre
+      const sortedNodes = existingMindMap.nodes.sort((a, b) => {
+        const aData = JSON.parse(a.data);
+        const bData = JSON.parse(b.data);
+        return (aData.nodeIndex || 0) - (bData.nodeIndex || 0);
+      });
+
+      // Créer un mapping index -> nouveau node ID pour les edges
+      const indexToNodeId: { [key: string]: string } = {};
+
+      // Convertir les nodes de la DB au format ReactFlow
+      const nodes: GeneratedNode[] = sortedNodes.map((node, index) => {
+        const parsedData = JSON.parse(node.data);
+        // Mapper l'index au node ID de la DB
+        indexToNodeId[String(index)] = node.id;
+
+        return {
+          id: node.id,
+          type: node.type,
+          position: JSON.parse(node.position),
+          data: {
+            label: parsedData.label,
+            gradient: parsedData.gradient,
+            borderColor: parsedData.borderColor,
+            level: parsedData.level,
+          },
+        };
+      });
+
+      // Convertir les edges de la DB au format ReactFlow
+      const edges: GeneratedEdge[] = existingMindMap.edges.map((edge, idx) => {
+        // Les source et target stockés sont des indexes (string)
+        const sourceNodeId = indexToNodeId[edge.source] || edge.source;
+        const targetNodeId = indexToNodeId[edge.target] || edge.target;
+
+        return {
+          id: `edge-${sourceNodeId}-${targetNodeId}`,
+          source: sourceNodeId,
+          target: targetNodeId,
+          type: edge.type || 'smoothstep',
+          animated: edge.animated,
+          style: edge.style ? JSON.parse(edge.style) : {
+            stroke: '#6366f1',
+            strokeWidth: 2,
+          },
+        };
+      });
+
+      return NextResponse.json({
+        nodes,
+        edges,
+        theme,
+        fromCache: true,
+        mindMapId: existingMindMap.id,
+      });
     }
 
     // Appel à l'API OpenAI pour générer la structure de la mind map
@@ -224,11 +298,66 @@ export async function POST(request: NextRequest) {
     // Créer tous les nodes et edges
     createNodesAndEdges(mindMapStructure, null, 0, 0, 1, 0);
 
-    return NextResponse.json({
-      nodes,
-      edges,
-      theme,
-    });
+    // Sauvegarder automatiquement dans la base de données pour le cache
+    try {
+      // Créer un mapping des IDs ReactFlow vers les indexes pour pouvoir recréer les edges
+      const nodeIdMapping: { [key: string]: number } = {};
+      nodes.forEach((node, index) => {
+        nodeIdMapping[node.id] = index;
+      });
+
+      const mindMap = await prisma.mindMap.create({
+        data: {
+          title: theme,
+          description: `Mind map générée automatiquement sur le thème: ${theme}`,
+          theme: normalizedTheme,
+          nodes: {
+            create: nodes.map((node, index) => ({
+              // Stocker l'index comme ID temporaire pour recréer la structure
+              type: node.type,
+              label: node.data.label,
+              position: JSON.stringify(node.position),
+              data: JSON.stringify({
+                ...node.data,
+                originalId: node.id, // Stocker l'ID original pour référence
+                nodeIndex: index, // Stocker l'index
+              }),
+            })),
+          },
+          edges: {
+            create: edges.map((edge) => ({
+              // Stocker les indexes au lieu des IDs
+              source: String(nodeIdMapping[edge.source]),
+              target: String(nodeIdMapping[edge.target]),
+              type: edge.type,
+              animated: edge.animated,
+              style: JSON.stringify(edge.style),
+            })),
+          },
+        },
+        include: {
+          nodes: true,
+          edges: true,
+        },
+      });
+
+      return NextResponse.json({
+        nodes,
+        edges,
+        theme,
+        mindMapId: mindMap.id,
+        fromCache: false,
+      });
+    } catch (dbError) {
+      // Si erreur de sauvegarde, retourner quand même les données générées
+      console.error('Erreur lors de la sauvegarde automatique:', dbError);
+      return NextResponse.json({
+        nodes,
+        edges,
+        theme,
+        fromCache: false,
+      });
+    }
 
   } catch (error) {
     console.error('Erreur lors de la génération de la mind map:', error);

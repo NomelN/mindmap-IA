@@ -20,6 +20,7 @@ interface GeneratedNode {
     label: string;
     gradient: string;
     borderColor: string;
+    level: number; // Pour différencier visuellement
   };
 }
 
@@ -60,22 +61,48 @@ export async function POST(request: NextRequest) {
         {
           role: 'system',
           content: `Tu es un assistant qui génère des structures de mind map.
-          Génère une mind map hiérarchique sur le thème donné avec 1 nœud central, 4-6 branches principales, et 2-4 sous-branches par branche principale.
+          Génère une mind map hiérarchique sur le thème donné avec EXACTEMENT 1 nœud central et EXACTEMENT 4 branches principales, chaque branche ayant 3-4 sous-branches.
           Réponds UNIQUEMENT avec un objet JSON valide dans ce format exact:
           {
             "id": "1",
-            "label": "Thème central",
+            "label": "Thème central (court et concis)",
             "children": [
               {
                 "id": "2",
-                "label": "Branche 1",
+                "label": "Branche principale 1",
                 "children": [
                   { "id": "3", "label": "Sous-branche 1.1" },
                   { "id": "4", "label": "Sous-branche 1.2" }
                 ]
+              },
+              {
+                "id": "5",
+                "label": "Branche principale 2",
+                "children": [
+                  { "id": "6", "label": "Sous-branche 2.1" },
+                  { "id": "7", "label": "Sous-branche 2.2" }
+                ]
+              },
+              {
+                "id": "8",
+                "label": "Branche principale 3",
+                "children": [
+                  { "id": "9", "label": "Sous-branche 3.1" },
+                  { "id": "10", "label": "Sous-branche 3.2" }
+                ]
+              },
+              {
+                "id": "11",
+                "label": "Branche principale 4",
+                "children": [
+                  { "id": "12", "label": "Sous-branche 4.1" },
+                  { "id": "13", "label": "Sous-branche 4.2" }
+                ]
               }
             ]
           }
+          Important: Tu dois TOUJOURS générer EXACTEMENT 4 branches principales, pas plus, pas moins.
+          Les labels doivent être courts (2-4 mots maximum).
           Assure-toi que chaque ID est unique et numérique séquentiel.`
         },
         {
@@ -114,23 +141,28 @@ export async function POST(request: NextRequest) {
       // Attribuer une couleur en fonction du niveau
       let color;
       if (level === 0) {
-        // Nœud central - couleur unique
-        color = nodeColors[0];
+        // Nœud central - gradient doré brillant unique
+        color = {
+          name: 'gold',
+          gradient: 'linear-gradient(135deg, #ffd700, #ffed4e, #ffd700, #ffed4e)',
+          border: '#ffd700',
+          hex: '#ffd700'
+        };
       } else if (level === 1) {
-        // Branches principales - chaque branche a sa propre couleur
+        // Branches principales - chaque branche a sa propre couleur (on commence à l'index 0)
         color = nodeColors[siblingIndex % nodeColors.length];
       } else {
-        // Sous-branches - même couleur que le parent
+        // Sous-branches - même couleur que le parent mais plus claire
         color = parentColor || nodeColors[0];
       }
 
       // Calculer la position
-      let x = 400; // Centre
-      let y = 200; // Centre
+      let x = 500; // Centre
+      let y = 300; // Centre
 
       if (level > 0 && parentId) {
-        const radius = level === 1 ? 250 : 150;
-        const spreadAngle = level === 1 ? 360 : 120;
+        const radius = level === 1 ? 300 : 180; // Plus d'espace entre les niveaux
+        const spreadAngle = level === 1 ? 360 : 100;
         const startAngle = level === 1 ? 0 : angle - spreadAngle / 2;
         const angleStep = totalSiblings > 1 ? spreadAngle / (totalSiblings - 1) : 0;
         const currentAngle = startAngle + (angleStep * siblingIndex);
@@ -143,7 +175,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Créer le node
+      // Créer le node avec le niveau pour la différenciation visuelle
       nodes.push({
         id: nodeId,
         type: 'custom',
@@ -152,6 +184,7 @@ export async function POST(request: NextRequest) {
           label: node.label,
           gradient: color.gradient,
           borderColor: color.border,
+          level: level,
         },
       });
 

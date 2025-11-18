@@ -2,42 +2,76 @@
 
 import { useState } from 'react';
 import { useMindMapStore } from '@/lib/store';
-import { getRandomColor } from '@/lib/utils';
-import { Node } from '@xyflow/react';
 
 export default function Toolbar() {
-  const { nodes, edges, addNode, mindMapId, setMindMapId } = useMindMapStore();
-  const [newNodeLabel, setNewNodeLabel] = useState('');
+  const { nodes, edges, setNodes, setEdges, mindMapId, setMindMapId } = useMindMapStore();
+  const [theme, setTheme] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleAddNode = () => {
-    if (!newNodeLabel.trim()) return;
-
-    const colors = getRandomColor();
-
-    // Calculer une position aléatoire autour du centre
-    const randomX = 300 + Math.random() * 400;
-    const randomY = 100 + Math.random() * 400;
-
-    const newNode: Node = {
-      id: `node-${Date.now()}`,
-      type: 'custom',
-      position: { x: randomX, y: randomY },
-      data: {
-        label: newNodeLabel,
-        colorClass: colors.bg,
-        borderClass: colors.border,
-        textClass: colors.text,
-      },
-    };
-
-    addNode(newNode);
-    setNewNodeLabel('');
+  const handleClear = () => {
+    if (nodes.length > 0) {
+      const confirm = window.confirm('Êtes-vous sûr de vouloir effacer la carte actuelle ?');
+      if (confirm) {
+        setNodes([]);
+        setEdges([]);
+        setTheme('');
+        setMindMapId(null);
+      }
+    }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddNode();
+  const handleGenerate = async () => {
+    if (!theme.trim()) return;
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ theme }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Animation: ajouter les nodes progressivement
+        const { nodes: generatedNodes, edges: generatedEdges } = data;
+
+        // Réinitialiser d'abord
+        setNodes([]);
+        setEdges([]);
+
+        // Ajouter les nodes avec animation
+        for (let i = 0; i < generatedNodes.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 150)); // Délai entre chaque node
+          setNodes(generatedNodes.slice(0, i + 1));
+
+          // Ajouter les edges correspondants
+          const relevantEdges = generatedEdges.filter((edge: any) => {
+            const sourceIndex = generatedNodes.findIndex((n: any) => n.id === edge.source);
+            const targetIndex = generatedNodes.findIndex((n: any) => n.id === edge.target);
+            return sourceIndex <= i && targetIndex <= i;
+          });
+          setEdges(relevantEdges);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Erreur lors de la génération');
+      }
+    } catch (error) {
+      console.error('Generate error:', error);
+      alert('Erreur lors de la génération de la mind map');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isGenerating) {
+      handleGenerate();
     }
   };
 
@@ -78,61 +112,112 @@ export default function Toolbar() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl px-6 py-4 border-2 border-gray-200 backdrop-blur-sm bg-opacity-95">
+    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-4 py-3 border border-gray-200/50">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🧠</span>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Mind Map
-          </h1>
+        {/* Logo et titre */}
+        <div className="flex items-center gap-2 pr-3 border-r border-gray-200">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-sm">
+            M
+          </div>
+          <span className="text-sm font-semibold text-gray-700 hidden sm:block">Mind Map IA</span>
         </div>
 
-        <div className="h-8 w-px bg-gray-300 mx-2" />
+        {/* Barre de recherche */}
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Entrez un thème..."
+              className="w-full pl-4 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-gray-50/50 hover:bg-white"
+              disabled={isGenerating}
+            />
+            {theme && (
+              <button
+                onClick={() => setTheme('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={newNodeLabel}
-            onChange={(e) => setNewNodeLabel(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Nouvelle idée..."
-            className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-          />
+          {/* Bouton Générer */}
           <button
-            onClick={handleAddNode}
-            disabled={!newNodeLabel.trim()}
-            className="px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            onClick={handleGenerate}
+            disabled={!theme.trim() || isGenerating}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
           >
-            + Ajouter
+            {isGenerating ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="hidden sm:inline">Génération...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="hidden sm:inline">Générer</span>
+              </>
+            )}
           </button>
         </div>
 
-        <div className="h-8 w-px bg-gray-300 mx-2" />
+        {/* Séparateur */}
+        <div className="h-8 w-px bg-gray-200 hidden md:block" />
 
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="font-semibold">{nodes.length}</span>
-          <span>idées</span>
+        {/* Compteur */}
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-md">
+          <span className="font-semibold text-gray-800">{nodes.length}</span>
+          <span>nœuds</span>
         </div>
 
-        <div className="h-8 w-px bg-gray-300 mx-2" />
+        {/* Séparateur */}
+        <div className="h-8 w-px bg-gray-200 hidden md:block" />
 
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-        >
-          {isSaving ? (
-            <>
-              <span className="animate-spin">⏳</span>
-              <span>Sauvegarde...</span>
-            </>
-          ) : (
-            <>
-              <span>💾</span>
-              <span>Sauvegarder</span>
-            </>
-          )}
-        </button>
+        {/* Boutons d'action */}
+        <div className="flex items-center gap-2">
+          {/* Bouton Effacer */}
+          <button
+            onClick={handleClear}
+            disabled={nodes.length === 0}
+            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
+            title="Effacer la carte"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+
+          {/* Bouton Sauvegarder */}
+          <button
+            onClick={handleSave}
+            disabled={isSaving || nodes.length === 0}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+          >
+            {isSaving ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">{isSaving ? 'Sauvegarde...' : 'Sauvegarder'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

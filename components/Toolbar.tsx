@@ -37,6 +37,11 @@ export default function Toolbar() {
       if (response.ok) {
         const data = await response.json();
 
+        // Mettre à jour le mindMapId (depuis le cache ou nouvelle génération)
+        if (data.mindMapId) {
+          setMindMapId(data.mindMapId);
+        }
+
         // Animation: ajouter les nodes progressivement
         const { nodes: generatedNodes, edges: generatedEdges } = data;
 
@@ -87,8 +92,9 @@ export default function Toolbar() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title: 'Ma Mind Map',
+          title: theme || 'Ma Mind Map',
           description: 'Mind map créée avec ReactFlow',
+          theme: theme.toLowerCase().trim(),
           nodes,
           edges,
         }),

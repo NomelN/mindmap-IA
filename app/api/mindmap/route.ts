@@ -27,12 +27,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, nodes, edges } = body;
+    const { title, description, theme, nodes, edges } = body;
 
     const mindMap = await prisma.mindMap.create({
       data: {
         title: title || 'Nouvelle Mind Map',
         description: description || '',
+        theme: theme ? theme.toLowerCase().trim() : null,
         nodes: {
           create: nodes.map((node: any) => ({
             id: node.id,

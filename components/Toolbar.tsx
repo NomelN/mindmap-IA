@@ -118,32 +118,32 @@ export default function Toolbar() {
   };
 
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-lg px-4 py-3 border border-gray-200/50">
+    <div className="bg-white/80 backdrop-blur-xl rounded-full shadow-lg px-6 py-3 border border-zinc-200 flex items-center gap-4">
       <div className="flex items-center gap-3">
         {/* Logo et titre */}
-        <div className="flex items-center gap-2 pr-3 border-r border-gray-200">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-sm">
+        <div className="flex items-center gap-2 pr-4 border-r border-zinc-200">
+          <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-sm">
             M
           </div>
-          <span className="text-sm font-semibold text-gray-700 hidden sm:block">Mind Map IA</span>
+          <span className="text-sm font-semibold text-zinc-800 hidden sm:block">Mind Map IA</span>
         </div>
 
         {/* Barre de recherche */}
-        <div className="flex items-center gap-2 flex-1">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex items-center gap-2">
+          <div className="relative w-64">
             <input
               type="text"
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Entrez un thème..."
-              className="w-full pl-4 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-gray-50/50 hover:bg-white"
+              className="w-full pl-4 pr-10 py-2 text-sm bg-zinc-50 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-zinc-200 text-zinc-800 placeholder-zinc-400 transition-all"
               disabled={isGenerating}
             />
             {theme && (
               <button
                 onClick={() => setTheme('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -156,7 +156,7 @@ export default function Toolbar() {
           <button
             onClick={handleGenerate}
             disabled={!theme.trim() || isGenerating}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm hover:shadow-md"
           >
             {isGenerating ? (
               <>
@@ -178,24 +178,24 @@ export default function Toolbar() {
         </div>
 
         {/* Séparateur */}
-        <div className="h-8 w-px bg-gray-200 hidden md:block" />
+        <div className="h-6 w-px bg-zinc-200 hidden md:block" />
 
         {/* Compteur */}
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-md">
-          <span className="font-semibold text-gray-800">{nodes.length}</span>
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-500 bg-zinc-50 px-3 py-1.5 rounded-full border border-zinc-100">
+          <span className="font-semibold text-zinc-800">{nodes.length}</span>
           <span>nœuds</span>
         </div>
 
         {/* Séparateur */}
-        <div className="h-8 w-px bg-gray-200 hidden md:block" />
+        <div className="h-6 w-px bg-zinc-200 hidden md:block" />
 
         {/* Boutons d'action */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {/* Bouton Effacer */}
           <button
             onClick={handleClear}
             disabled={nodes.length === 0}
-            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
+            className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="Effacer la carte"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,21 +207,19 @@ export default function Toolbar() {
           <button
             onClick={handleSave}
             disabled={isSaving || nodes.length === 0}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            className="px-4 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 text-sm font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
             ) : (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
               </svg>
             )}
-            <span className="hidden sm:inline">{isSaving ? 'Sauvegarde...' : 'Sauvegarder'}</span>
+            <span className="hidden sm:inline">{isSaving ? '...' : 'Sauvegarder'}</span>
           </button>
         </div>
       </div>

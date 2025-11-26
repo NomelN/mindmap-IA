@@ -26,7 +26,7 @@ const nodeTypes = {
 const edgeOptions = {
   animated: true,
   style: {
-    stroke: '#6366f1',
+    stroke: '#a1a1aa', // zinc-400
     strokeWidth: 2,
   },
 };
@@ -50,7 +50,7 @@ function FlowContent() {
         type: 'smoothstep',
         animated: true,
         style: {
-          stroke: '#6366f1',
+          stroke: '#a1a1aa', // zinc-400
           strokeWidth: 2,
         },
       } as Edge;
@@ -79,7 +79,7 @@ function FlowContent() {
         variant={BackgroundVariant.Dots}
         gap={20}
         size={1}
-        color="#cbd5e1"
+        color="#e4e4e7" // zinc-200
       />
       <Controls
         className="bg-white rounded-lg shadow-lg border border-gray-200"
@@ -87,9 +87,9 @@ function FlowContent() {
       />
       <MiniMap
         className="bg-white rounded-lg shadow-lg border border-gray-200"
-        nodeColor={(node) => {
+        nodeColor={(node: Node) => {
           // Extraire la couleur du borderColor
-          const borderColor = node.data?.borderColor;
+          const borderColor = (node.data as any)?.borderColor;
           return borderColor || '#3b82f6';
         }}
         maskColor="rgb(240, 240, 255, 0.6)"
@@ -110,7 +110,7 @@ export default function MindMapCanvas() {
   } = useMindMapStore();
 
   return (
-    <div className="w-full h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="w-full h-screen bg-zinc-50">
       <ReactFlow
         nodes={nodes}
         edges={edges}

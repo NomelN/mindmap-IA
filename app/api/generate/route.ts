@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           type: edge.type || 'smoothstep',
           animated: edge.animated,
           style: edge.style ? JSON.parse(edge.style) : {
-            stroke: '#a1a1aa',
+            stroke: '#a1a1aa', // Fallback
             strokeWidth: 2,
           },
         };
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
           type: 'smoothstep',
           animated: true,
           style: {
-            stroke: '#a1a1aa', // zinc-400
+            stroke: edgeColor,
             strokeWidth: 2,
           },
         });

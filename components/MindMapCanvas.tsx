@@ -44,19 +44,23 @@ function FlowContent() {
 
   const onConnect = useCallback(
     (params: Connection) => {
+      // Trouver le nœud source pour récupérer sa couleur
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const sourceColor = (sourceNode?.data as any)?.borderColor || '#a1a1aa';
+
       const newEdge: Edge = {
         ...params,
         id: `edge-${Date.now()}`,
         type: 'smoothstep',
         animated: true,
         style: {
-          stroke: '#a1a1aa', // zinc-400
+          stroke: sourceColor,
           strokeWidth: 2,
         },
       } as Edge;
       addStoreEdge(newEdge);
     },
-    [addStoreEdge]
+    [addStoreEdge, nodes]
   );
 
   // Centrer automatiquement quand les nodes changent

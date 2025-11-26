@@ -19,9 +19,11 @@ interface GeneratedNode {
   position: { x: number; y: number };
   data: {
     label: string;
-    gradient: string;
-    borderColor: string;
-    level: number; // Pour différencier visuellement
+    colorClass?: string;
+    borderClass?: string;
+    textClass?: string;
+    borderColor?: string;
+    level: number;
   };
 }
 
@@ -93,7 +95,9 @@ export async function POST(request: NextRequest) {
           position: JSON.parse(node.position),
           data: {
             label: parsedData.label,
-            gradient: parsedData.gradient,
+            colorClass: parsedData.colorClass,
+            borderClass: parsedData.borderClass,
+            textClass: parsedData.textClass,
             borderColor: parsedData.borderColor,
             level: parsedData.level,
           },
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
           type: edge.type || 'smoothstep',
           animated: edge.animated,
           style: edge.style ? JSON.parse(edge.style) : {
-            stroke: '#6366f1',
+            stroke: '#a1a1aa', // Fallback
             strokeWidth: 2,
           },
         };
@@ -215,18 +219,19 @@ export async function POST(request: NextRequest) {
       // Attribuer une couleur en fonction du niveau
       let color;
       if (level === 0) {
-        // Nœud central - gradient doré brillant unique
+        // Nœud central - Zinc Dark
         color = {
-          name: 'gold',
-          gradient: 'linear-gradient(135deg, #ffd700, #ffed4e, #ffd700, #ffed4e)',
-          border: '#ffd700',
-          hex: '#ffd700'
+          name: 'zinc',
+          bg: 'bg-zinc-900',
+          border: 'border-zinc-900',
+          text: 'text-white',
+          hex: '#18181b'
         };
       } else if (level === 1) {
-        // Branches principales - chaque branche a sa propre couleur (on commence à l'index 0)
+        // Branches principales - chaque branche a sa propre couleur
         color = nodeColors[siblingIndex % nodeColors.length];
       } else {
-        // Sous-branches - même couleur que le parent mais plus claire
+        // Sous-branches - même couleur que le parent
         color = parentColor || nodeColors[0];
       }
 
@@ -257,8 +262,10 @@ export async function POST(request: NextRequest) {
         position: { x, y },
         data: {
           label: node.label,
-          gradient: color.gradient,
-          borderColor: color.border,
+          colorClass: color.bg,
+          borderClass: color.border,
+          textClass: color.text,
+          borderColor: color.hex,
           level: level,
         },
       });

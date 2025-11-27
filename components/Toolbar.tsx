@@ -6,6 +6,7 @@ import { useReactFlow, getNodesBounds, getViewportForBounds } from '@xyflow/reac
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import Link from 'next/link';
+import ConfirmModal from './ConfirmModal';
 
 export default function Toolbar() {
   const { nodes, edges, setNodes, setEdges, mindMapId, setMindMapId } = useMindMapStore();
@@ -13,18 +14,20 @@ export default function Toolbar() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { getNodes } = useReactFlow();
 
   const handleClear = () => {
     if (nodes.length > 0) {
-      const confirm = window.confirm('Êtes-vous sûr de vouloir effacer la carte actuelle ?');
-      if (confirm) {
-        setNodes([]);
-        setEdges([]);
-        setTheme('');
-        setMindMapId(null);
-      }
+      setShowConfirmModal(true);
     }
+  };
+
+  const confirmClear = () => {
+    setNodes([]);
+    setEdges([]);
+    setTheme('');
+    setMindMapId(null);
   };
 
   const handleGenerate = async () => {
@@ -320,6 +323,14 @@ export default function Toolbar() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmClear}
+        title="Effacer la mind map ?"
+        message="Cette action est irréversible. Toutes vos modifications seront perdues."
+      />
     </div>
   );
 }

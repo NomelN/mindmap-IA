@@ -7,15 +7,18 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import Link from 'next/link';
 import ConfirmModal from './ConfirmModal';
+import MapsPanel from './MapsPanel';
+import AutoSave from './AutoSave';
 
 export default function Toolbar() {
-  const { nodes, edges, setNodes, setEdges, mindMapId, setMindMapId } = useMindMapStore();
+  const { nodes, edges, setNodes, setEdges, mindMapId, setMindMapId, markClean } = useMindMapStore();
   const [theme, setTheme] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const { getNodes } = useReactFlow();
+  const [showMapsPanel, setShowMapsPanel] = useState(false);
+  const { getNodes, fitView } = useReactFlow();
 
   const handleClear = () => {
     if (nodes.length > 0) {
@@ -24,10 +27,13 @@ export default function Toolbar() {
   };
 
   const confirmClear = () => {
+    // « Effacer » détache le canvas de la carte sauvegardée sans la supprimer :
+    // on repart propre pour ne pas déclencher l'autosave
     setNodes([]);
     setEdges([]);
     setTheme('');
     setMindMapId(null);
+    markClean();
   };
 
   const handleGenerate = async () => {
@@ -70,7 +76,12 @@ export default function Toolbar() {
             return sourceIndex <= i && targetIndex <= i;
           });
           setEdges(relevantEdges);
+
+          // Garder les nœuds fraîchement apparus dans le cadre
+          fitView({ padding: 0.2, maxZoom: 1, duration: 0 });
         }
+        // Recentrage final en douceur
+        setTimeout(() => fitView({ padding: 0.2, maxZoom: 1, duration: 600 }), 50);
       } else {
         const errorData = await response.json();
         alert(errorData.error || 'Erreur lors de la génération');
@@ -257,11 +268,26 @@ export default function Toolbar() {
           <span>nœuds</span>
         </div>
 
+        {/* État de sauvegarde */}
+        <AutoSave />
+
         {/* Séparateur */}
         <div className="h-6 w-px bg-zinc-200 hidden md:block" />
 
         {/* Boutons d'action */}
         <div className="flex items-center gap-1">
+          {/* Bouton Mes cartes */}
+          <button
+            onClick={() => setShowMapsPanel(true)}
+            className="px-4 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 text-sm font-medium rounded-full transition-colors flex items-center gap-2"
+            title="Mes cartes sauvegardées"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+            </svg>
+            <span className="hidden sm:inline">Mes cartes</span>
+          </button>
+
           {/* Bouton Effacer */}
           <button
             onClick={handleClear}
@@ -331,6 +357,8 @@ export default function Toolbar() {
         title="Effacer la mind map ?"
         message="Cette action est irréversible. Toutes vos modifications seront perdues."
       />
+
+      <MapsPanel isOpen={showMapsPanel} onClose={() => setShowMapsPanel(false)} />
     </div>
   );
 }

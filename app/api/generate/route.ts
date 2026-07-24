@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { nodeColors } from '@/lib/utils';
 import { prisma } from '@/lib/prisma';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { dbMindMapToFlow } from '@/lib/mindmap-transform';
+import { getAIClient } from '@/lib/ai';
 
 interface MindMapNode {
   id: string;
@@ -73,55 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Si une mind map existe, la retourner au lieu de régénérer
     if (existingMindMap) {
-      // Trier les nodes par leur index pour maintenir l'ordre
-      const sortedNodes = existingMindMap.nodes.sort((a, b) => {
-        const aData = JSON.parse(a.data);
-        const bData = JSON.parse(b.data);
-        return (aData.nodeIndex || 0) - (bData.nodeIndex || 0);
-      });
-
-      // Créer un mapping index -> nouveau node ID pour les edges
-      const indexToNodeId: { [key: string]: string } = {};
-
-      // Convertir les nodes de la DB au format ReactFlow
-      const nodes: GeneratedNode[] = sortedNodes.map((node, index) => {
-        const parsedData = JSON.parse(node.data);
-        // Mapper l'index au node ID de la DB
-        indexToNodeId[String(index)] = node.id;
-
-        return {
-          id: node.id,
-          type: node.type,
-          position: JSON.parse(node.position),
-          data: {
-            label: parsedData.label,
-            colorClass: parsedData.colorClass,
-            borderClass: parsedData.borderClass,
-            textClass: parsedData.textClass,
-            borderColor: parsedData.borderColor,
-            level: parsedData.level,
-          },
-        };
-      });
-
-      // Convertir les edges de la DB au format ReactFlow
-      const edges: GeneratedEdge[] = existingMindMap.edges.map((edge, idx) => {
-        // Les source et target stockés sont des indexes (string)
-        const sourceNodeId = indexToNodeId[edge.source] || edge.source;
-        const targetNodeId = indexToNodeId[edge.target] || edge.target;
-
-        return {
-          id: `edge-${sourceNodeId}-${targetNodeId}`,
-          source: sourceNodeId,
-          target: targetNodeId,
-          type: edge.type || 'smoothstep',
-          animated: edge.animated,
-          style: edge.style ? JSON.parse(edge.style) : {
-            stroke: '#a1a1aa', // Fallback
-            strokeWidth: 2,
-          },
-        };
-      });
+      const { nodes, edges } = dbMindMapToFlow(existingMindMap);
 
       return NextResponse.json({
         nodes,
@@ -132,9 +81,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Appel à l'API OpenAI pour générer la structure de la mind map
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    // Appel à l'API IA pour générer la structure de la mind map
+    const { client, model } = getAIClient();
+    const completion = await client.chat.completions.create({
+      model,
       messages: [
         {
           role: 'system',

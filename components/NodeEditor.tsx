@@ -71,6 +71,16 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSave();
+                } else if (e.key === 'Escape') {
+                  e.preventDefault();
+                  onClose();
+                }
+              }}
               className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-zinc-900 placeholder-zinc-400"
               autoFocus
             />
@@ -81,14 +91,29 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
               Couleur
             </label>
             <div className="grid grid-cols-6 gap-2">
-              {nodeColors.map((color, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleColorChange(color)}
-                  className={`h-8 w-8 rounded-full ${color.bg} border ${color.border} hover:scale-110 transition-transform ring-offset-2 focus:ring-2 focus:ring-blue-500`}
-                  title={color.name}
-                />
-              ))}
+              {nodeColors.map((color, index) => {
+                const isSelected =
+                  (node.data as { borderColor?: string })?.borderColor === color.hex;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleColorChange(color)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 ${
+                      isSelected ? 'ring-2 ring-zinc-900 ring-offset-2' : ''
+                    }`}
+                    style={{ backgroundColor: color.hex }}
+                    title={color.name}
+                    aria-label={`Couleur ${color.name}`}
+                    aria-pressed={isSelected}
+                  >
+                    {isSelected && (
+                      <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

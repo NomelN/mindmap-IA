@@ -21,7 +21,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-bricolage), system-ui, -apple-system, sans-serif;
 }
 
 /* ========================================
@@ -449,9 +449,68 @@ body {
   }
 }
 
+/* ========================================
+   LANDING — CANVAS IMMERSIF
+   ======================================== */
+
+/* Grille de points façon canvas React Flow */
+.canvas-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* Apparition d'un lien : fondu depuis 0 vers l'opacité posée sur l'élément */
+@keyframes edge-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Flottement discret des nœuds une fois la carte construite */
+@keyframes float-soft {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float-soft {
+  animation: float-soft 5s ease-in-out infinite;
+}
+
+/* Focus clavier visible sur fond sombre comme clair */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #fcd34d;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;
+}
+
+/* Reduced motion : tout apparaît instantanément, aucun contenu n'est perdu */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Selection style */

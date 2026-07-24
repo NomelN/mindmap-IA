@@ -33,7 +33,11 @@ export async function GET(
   }
 }
 
-// PUT - Mettre à jour une mind map
+// PUT - Mettre à jour une mind map.
+// Convention de stockage identique à /api/generate : les edges référencent les
+// nœuds par INDEX (pas par id), et les ids de nœuds sont régénérés par Prisma.
+// Cela évite toute collision d'ids client ("node-0"…) entre cartes et reste
+// compatible avec dbMindMapToFlow.
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -43,6 +47,18 @@ export async function PUT(
     const body = await request.json();
     const { title, description, theme, nodes, edges } = body;
 
+    if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+      return NextResponse.json(
+        { error: 'nodes et edges sont requis' },
+        { status: 400 }
+      );
+    }
+
+    // Mapping id client -> index pour résoudre les edges
+    const idToIndex = new Map<string, number>(
+      nodes.map((node: any, index: number) => [node.id, index])
+    );
+
     // Supprimer les anciens nodes et edges
     await prisma.node.deleteMany({
       where: { mindMapId: id },
@@ -51,30 +67,34 @@ export async function PUT(
       where: { mindMapId: id },
     });
 
-    // Mettre à jour la mind map avec les nouveaux nodes et edges
+    // Mettre à jour la mind map ; titre/description/theme conservés si absents
     const mindMap = await prisma.mindMap.update({
       where: { id },
       data: {
-        title: title || 'Nouvelle Mind Map',
-        description: description || '',
-        theme: theme ? theme.toLowerCase().trim() : null,
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(theme !== undefined && {
+          theme: theme ? theme.toLowerCase().trim() : null,
+        }),
         nodes: {
-          create: nodes.map((node: any) => ({
-            id: node.id,
-            type: node.type,
+          create: nodes.map((node: any, index: number) => ({
+            type: node.type || 'custom',
             label: node.data?.label || '',
             position: JSON.stringify(node.position),
-            data: JSON.stringify(node.data),
+            data: JSON.stringify({
+              ...node.data,
+              originalId: node.id,
+              nodeIndex: index,
+            }),
             style: node.style ? JSON.stringify(node.style) : null,
           })),
         },
         edges: {
           create: edges.map((edge: any) => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
+            source: String(idToIndex.get(edge.source) ?? edge.source),
+            target: String(idToIndex.get(edge.target) ?? edge.target),
             type: edge.type || 'smoothstep',
-            animated: edge.animated || false,
+            animated: edge.animated ?? false,
             style: edge.style ? JSON.stringify(edge.style) : null,
           })),
         },
